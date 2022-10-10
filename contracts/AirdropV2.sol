@@ -3,14 +3,16 @@ pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol"; 
+import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
-contract AirdropV1 {
+contract AirdropV2 {
     using SafeERC20 for IERC20Metadata;
 
     address owner;
     address dropToken;
     uint256 dropAmount; 
-    mapping(address => bool) public whitelist; 
+    bytes32 public root;
+    mapping(address => bool) public usersClaimed;
     
     constructor(address _dropToken, uint256 _dropAmount) {
         owner = msg.sender;
@@ -18,19 +20,18 @@ contract AirdropV1 {
         dropAmount = _dropAmount;
     } 
 
-    function addToWhitelist(address[] calldata _users) public {
+    function setRoot(bytes32 _root) public {
         require(owner == msg.sender, "Only owner!");
-        for(uint i = 0; i < _users.length; i++) {
-            whitelist[_users[i]] = true;
-        }
+        root = _root;
     }
 
-    function claim() public {
-        require(whitelist[msg.sender], "You are not whitelisted.");
+    function claim(bytes32[] calldata _proof) public {
+        require(!usersClaimed[msg.sender], "Already claimed");
+        require(MerkleProof.verify(_proof, root, keccak256(abi.encodePacked(msg.sender))), "You are not whitelisted.");
         IERC20Metadata(dropToken).safeTransfer(
             msg.sender,
             dropAmount
         );
-        whitelist[msg.sender] = false;
+        usersClaimed[msg.sender] = true;
     }
 }
