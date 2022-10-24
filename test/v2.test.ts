@@ -6,6 +6,7 @@ import * as mocha from "mocha-steps";
 import { parseEther } from '@ethersproject/units';
 import { AirdropV2, Token20 } from '../typechain-types';
 import  keccak256  from "keccak256";
+import { MerkleTree } from "merkletreejs";
 
 describe("AirdropV2.sol testing", async () => {
     let airdrop: AirdropV2;
@@ -15,6 +16,8 @@ describe("AirdropV2.sol testing", async () => {
         user10: SignerWithAddress, unwhitelisted: SignerWithAddress;
     
     let dropAmount: BigNumber;
+    let Tree: MerkleTree;
+    let RootTree: string;
 
     beforeEach(async () => {
         [admin, user1, user2, user3, user4, user5, user6, user7, user8, user9, user10, unwhitelisted] = await ethers.getSigners();
@@ -39,29 +42,53 @@ describe("AirdropV2.sol testing", async () => {
         await dropToken.connect(admin).transfer(airdrop.address, parseEther('100000'));
     });
 
-    // mocha.step("Добавление пользователей в вайтлист", async function() {
-    //     const whitelist = [
-    //         user1.address, user2.address, user3.address, 
-    //         user4.address, user5.address, user6.address, 
-    //         user7.address, user8.address, user9.address,
-    //         user10.address
-    //     ];
-    //     await airdrop.connect(admin).addToWhitelist(whitelist);
-    // });
+    mocha.step("Формирование дерева меркла и получение корневого хэша", async function () {
+        const whitelist = [
+            user1.address, user2.address, user3.address, 
+            user4.address, user5.address, user6.address, 
+            user7.address, user8.address, user9.address,
+            user10.address
+        ];
+        const leafs = whitelist.map(address => keccak256(address));        
+        Tree = new MerkleTree(leafs, keccak256, {sortPairs: true});
+        RootTree = Tree.getHexRoot();
+    });
 
-    // mocha.step("Вызов функции claim, пользователями из вайтлиста", async function() {
-    //     await airdrop.connect(user1).claim();
-    //     await airdrop.connect(user2).claim();
-    //     await airdrop.connect(user3).claim();
-    // });
+    mocha.step("Установка корневого хэша в контракт аирдропа", async function () {
+        await airdrop.connect(admin).setRoot(RootTree);  
+    });
 
-    // mocha.step("Проверка баланса пользователей после claim", async function() {
-    //     expect(await dropToken.balanceOf(user1.address)).to.be.equal(dropAmount);              
-    //     expect(await dropToken.balanceOf(user2.address)).to.be.equal(dropAmount);              
-    //     expect(await dropToken.balanceOf(user3.address)).to.be.equal(dropAmount);              
-    // });
+    mocha.step("Вызов функции claim, пользователями из вайтлиста", async function() {
+        await airdrop.connect(user1).claim(Tree.getHexProof(keccak256(user1.address)));
+        await airdrop.connect(user2).claim(Tree.getHexProof(keccak256(user2.address)));
+        await airdrop.connect(user3).claim(Tree.getHexProof(keccak256(user3.address)));
+        await airdrop.connect(user4).claim(Tree.getHexProof(keccak256(user4.address)));
+        await airdrop.connect(user5).claim(Tree.getHexProof(keccak256(user5.address)));
+        await airdrop.connect(user6).claim(Tree.getHexProof(keccak256(user6.address)));
+        await airdrop.connect(user7).claim(Tree.getHexProof(keccak256(user7.address)));
+        await airdrop.connect(user8).claim(Tree.getHexProof(keccak256(user8.address)));
+        await airdrop.connect(user9).claim(Tree.getHexProof(keccak256(user9.address)));
+        await airdrop.connect(user10).claim(Tree.getHexProof(keccak256(user10.address)));
+    });
 
-    // mocha.step("Проверка защиты от несанкционированного клейма", async function() {
-    //     await expect(airdrop.connect(unwhitelisted).claim()).to.be.revertedWith('You are not whitelisted.');
-    // });
+    mocha.step("Проверка баланса пользователей после claim", async function() {
+        expect(await dropToken.balanceOf(user1.address)).to.be.equal(dropAmount);              
+        expect(await dropToken.balanceOf(user2.address)).to.be.equal(dropAmount);              
+        expect(await dropToken.balanceOf(user3.address)).to.be.equal(dropAmount);              
+        expect(await dropToken.balanceOf(user4.address)).to.be.equal(dropAmount);              
+        expect(await dropToken.balanceOf(user5.address)).to.be.equal(dropAmount);              
+        expect(await dropToken.balanceOf(user6.address)).to.be.equal(dropAmount);              
+        expect(await dropToken.balanceOf(user7.address)).to.be.equal(dropAmount);              
+        expect(await dropToken.balanceOf(user8.address)).to.be.equal(dropAmount);              
+        expect(await dropToken.balanceOf(user9.address)).to.be.equal(dropAmount);              
+        expect(await dropToken.balanceOf(user10.address)).to.be.equal(dropAmount);              
+    });
+
+    mocha.step("Проверка на повторный клейм", async function() {
+        await expect(airdrop.connect(user1).claim(Tree.getHexProof(keccak256(user1.address)))).to.be.revertedWith('Already claimed');
+    });
+
+    mocha.step("Проверка защиты от несанкционированного клейма", async function() {
+        await expect(airdrop.connect(unwhitelisted).claim(Tree.getHexProof(keccak256(unwhitelisted.address)))).to.be.revertedWith('You are not whitelisted.');
+    });
 });
