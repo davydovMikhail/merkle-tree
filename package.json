@@ -1,12 +1,15 @@
 {
   "devDependencies": {
-    "@openzeppelin/contracts": "^4.7.3",
-    "hardhat": "^2.11.2",
     "@nomicfoundation/hardhat-toolbox": "^1.0.2",
+    "@openzeppelin/contracts": "^4.7.3",
     "@types/mocha": "^9.1.1",
     "@types/mocha-steps": "^1.3.0",
-    "mocha-steps": "^1.3.0",
+    "hardhat": "^2.11.2",
+    "keccak256": "^1.0.3",
     "merkletreejs": "^0.2.31",
-    "keccak256": "^1.0.3"
+    "mocha-steps": "^1.3.0"
+  },
+  "dependencies": {
+    "ethers": "^5.7.2"
   }
 }

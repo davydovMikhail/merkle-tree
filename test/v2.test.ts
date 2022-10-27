@@ -12,15 +12,14 @@ describe("AirdropV2.sol testing", async () => {
     let airdrop: AirdropV2;
     let dropToken: Token20;
     let admin: SignerWithAddress, user1: SignerWithAddress, user2: SignerWithAddress, user3: SignerWithAddress, user4: SignerWithAddress, 
-        user5: SignerWithAddress, user6: SignerWithAddress, user7: SignerWithAddress, user8: SignerWithAddress, user9: SignerWithAddress, 
-        user10: SignerWithAddress, unwhitelisted: SignerWithAddress;
+        user5: SignerWithAddress, user6: SignerWithAddress, user7: SignerWithAddress, user8: SignerWithAddress, unwhitelisted: SignerWithAddress;
     
     let dropAmount: BigNumber;
     let Tree: MerkleTree;
     let RootTree: string;
 
     beforeEach(async () => {
-        [admin, user1, user2, user3, user4, user5, user6, user7, user8, user9, user10, unwhitelisted] = await ethers.getSigners();
+        [admin, user1, user2, user3, user4, user5, user6, user7, user8, unwhitelisted] = await ethers.getSigners();
     });
 
     mocha.step("Деплой токена ERC20, который мы будем раздавать", async function() {
@@ -46,9 +45,10 @@ describe("AirdropV2.sol testing", async () => {
         const whitelist = [
             user1.address, user2.address, user3.address, 
             user4.address, user5.address, user6.address, 
-            user7.address, user8.address, user9.address,
-            user10.address
+            user7.address, user8.address
         ];
+        console.log(keccak256(whitelist[0]).toString('hex'));
+        
         const leafs = whitelist.map(address => keccak256(address));        
         Tree = new MerkleTree(leafs, keccak256, {sortPairs: true});
         RootTree = Tree.getHexRoot();
@@ -67,8 +67,6 @@ describe("AirdropV2.sol testing", async () => {
         await airdrop.connect(user6).claim(Tree.getHexProof(keccak256(user6.address)));
         await airdrop.connect(user7).claim(Tree.getHexProof(keccak256(user7.address)));
         await airdrop.connect(user8).claim(Tree.getHexProof(keccak256(user8.address)));
-        await airdrop.connect(user9).claim(Tree.getHexProof(keccak256(user9.address)));
-        await airdrop.connect(user10).claim(Tree.getHexProof(keccak256(user10.address)));
     });
 
     mocha.step("Проверка баланса пользователей после claim", async function() {
@@ -79,9 +77,7 @@ describe("AirdropV2.sol testing", async () => {
         expect(await dropToken.balanceOf(user5.address)).to.be.equal(dropAmount);              
         expect(await dropToken.balanceOf(user6.address)).to.be.equal(dropAmount);              
         expect(await dropToken.balanceOf(user7.address)).to.be.equal(dropAmount);              
-        expect(await dropToken.balanceOf(user8.address)).to.be.equal(dropAmount);              
-        expect(await dropToken.balanceOf(user9.address)).to.be.equal(dropAmount);              
-        expect(await dropToken.balanceOf(user10.address)).to.be.equal(dropAmount);              
+        expect(await dropToken.balanceOf(user8.address)).to.be.equal(dropAmount);                       
     });
 
     mocha.step("Проверка на повторный клейм", async function() {
