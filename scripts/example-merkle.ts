@@ -9,30 +9,40 @@ async function main() {
         '0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc',
         '0x976EA74026E726554dB657fA54763abd0C3a0aa9',
         '0x14dC79964da2C08b23698B3D3cc7Ca32193d9955',
-        '0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f' 
+        '0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f',
+        '0xa0Ee7A142d267C1f36714E4a8F75612F20a79720',
+        '0xBcd4042DE499D14e55001CcbB24a551F3b954096',
+        '0x71bE63f3384f5fb98995898A86B02Fb2426c5788',
+        '0xFABB0ac9d68B0B445fB7357272Ff202C5651694a',
+        '0x1CBd3b2770909D4e10f157cABC84C7264073C9Ec',
+        '0xdF3e18d64BC6A983f673Ab319CCaE4f1a57C7097'
     ]
-
-    const dataArray = addresses.map(address => BigInt(address));
-
-    // console.log(dataArray[0].toString(16).padStart(64, '0'));
     
-    const hash = (x: BigInt) => BigInt(ethers.utils.keccak256("0x" + x.toString(16).padStart(64, '0')));
-    const hash1 = (x: BigInt) => BigInt(ethers.utils.keccak256("0x" + x.toString(16)).padStart(64, '0'));
+    const dataArray = addresses.map(address => ethers.utils.keccak256(address));
 
+    function getPair(hashOne: string, hashTwo: string): string {
+        if (BigInt(hashOne) < BigInt(hashTwo)) {
+            return ethers.utils.solidityKeccak256([ 'bytes32', 'bytes32' ], [ hashOne, hashTwo ]);
+        } else {
+            return ethers.utils.solidityKeccak256([ 'bytes32', 'bytes32' ], [ hashTwo, hashOne ]);
+        }
+    }
 
-    const example = hash(dataArray[0]);
-    const examplt1 = hash1(dataArray[0]);
+    function getRoot(data: string[]): string {
+        const parity: boolean = !(data.length % 2);
+        let length = parity ? data.length : data.length - 1;
+        let result = [];
+        for (var i = 0; i < length - 1; i += 2) {
+            result.push(getPair(data[i], data[i + 1]));
+        }   
+        if (!parity) {
+            result.push(data[data.length - 1]);
+        }
+        return result.length == 1 ? result[0] : getRoot(result); 
+    }
 
-    
-
-    // const pairHash = (a: BigInt, b: BigInt) => hash(hash(a) ^ hash(b))
-    // const firstLevel = [];
-    
-    console.log('example.toString(16).padStart(64, 0)', example.toString(16)); 
-    console.log('example.toString(16)', examplt1.toString(16)); 
-    // 00314e565e0574cb412563df634608d76f5c59d9f817e85966100ec1d48005c0
-    //   314e565e0574cb412563df634608d76f5c59d9f817e85966100ec1d48005c0
-    //   314e565e0574cb412563df634608d76f5c59d9f817e85966100ec1d48005c0
+    const root = getRoot(dataArray);
+    console.log('root', root);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
@@ -41,3 +51,4 @@ main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
+
