@@ -5,7 +5,8 @@ import "ethers";
 const config: HardhatUserConfig = {
   solidity: "0.8.17",
   gasReporter: {
-    enabled: true
+    enabled: true,
+    gasPrice: 16
   },
 };
 

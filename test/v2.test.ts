@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { BigNumber, Contract } from "ethers";
+import { BigNumber } from "ethers";
 import * as mocha from "mocha-steps";
 import { parseEther } from '@ethersproject/units';
 import { AirdropV2, Token20 } from '../typechain-types';
