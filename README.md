@@ -1,13 +1,19 @@
-# Sample Hardhat Project
+# Merkle Tree
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a script that deploys that contract.
-
-Try running some of the following tasks:
+Build project
 
 ```shell
-npx hardhat help
-npx hardhat test
-REPORT_GAS=true npx hardhat test
-npx hardhat node
-npx hardhat run scripts/deploy.ts
+npm install 
+```
+
+Test AirdropV1.sol
+
+```shell
+npx hardhat test test/v1.test.ts
+```
+
+Test AirdropV2.sol
+
+```shell
+npx hardhat test test/v2.test.ts
 ```
